@@ -1,0 +1,80 @@
+<!doctype html>
+<head>
+    <meta charset="utf-8"/>
+</head>
+<body>
+    <div class="nav">
+        <div class="w">
+			<div>请先在<a href="https://ai.youdao.com">有道智云</a>申请一个带自然语言翻译-文本翻译的app</div>
+            <input type="text" placeholder="Youdao-Appid" class="aid" id="aid">
+            <input type="text" placeholder="Youdao-Appsecret" class="asec" id="asec">
+            <div><input type="text" placeholder="待翻译中文" class="txt" id="txt">
+			<input type="button" value="翻译！" onclick="request()" class="start" id="start"></div>
+        </div>
+		<div class=“ans”>
+			<div id="trans"></div>
+			<div id="status"></div>
+		</div>
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/crypto-js/4.0.0/crypto-js.js"></script>
+<script type="text/javascript">
+function request(){
+var appKey = $("#aid").val();
+var key = $("#asec").val();
+var salt = (new Date).getTime();
+var curtime = Math.round(new Date().getTime()/1000);
+var query = $("#txt").val();
+var from = 'zh-CHS';
+var to = 'en';
+var str1 = appKey + truncate(query) + salt + curtime + key;
+var vocabId =  '9E47A57AA8B348B789AD6C59B94AFA79';
+//console.log('---',str1);
+
+var sign = CryptoJS.SHA256(str1).toString(CryptoJS.enc.Hex);
+$.ajax({
+    url: 'http://openapi.youdao.com/api',
+    type: 'post',
+    dataType: 'jsonp',
+    data: {
+        q: query,
+        appKey: appKey,
+        salt: salt,
+        from: from,
+        to: to,
+        sign: sign,
+        signType: "v3",
+        curtime: curtime,
+        vocabId: vocabId,
+    },
+    success: function (data) {
+		var tranWord = data.translation;
+		var stat = data.errorCode;
+		console.log(data)
+		console.log(tranWord);
+		console.log(stat);
+		$("#trans").text("英文翻译捏: "+tranWord);
+		//$("#status").text(stat);
+		if (stat == '0') {
+		$("#status").text("0：翻译成功")
+		} else if (stat == '108') {
+		$("#status").text("108：应用ID无效，注册账号，登录后台创建应用并完成绑定，可获得应用ID和应用密钥等信息")
+		} else if (stat == '113') {
+		$("#status").text("113：待翻译字段不能为空")
+		} else if (stat == '202') {
+		$("#status").text("202：签名检验失败,如果确认应用ID和应用密钥的正确性")
+		} else {
+		$("#status").text("errcode=" + stat)
+		}
+    }
+})}
+
+function truncate(q){
+    var len = q.length;
+    if(len<=20) return q;
+    return q.substring(0, 10) + len + q.substring(len-10, len);
+}
+</script>
+</body>
+            

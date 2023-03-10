@@ -1,0 +1,82 @@
+<!doctype html>
+<head>
+    <meta charset="utf-8"/>
+</head>
+<body>
+    <div class="nav">
+        <div class="w">
+			<a href="https://ai.youdao.com">有道智云</a><strong>预填充appid/appsecret版 个人/商用请使用</strong><a href="./index.html">index.html</a>
+            <div><input type="text" placeholder="待翻译中文" class="txt" id="txt">
+			<input type="button" value="翻译！" onclick="request()" class="start" id="start"></div>
+        </div>
+		
+		<div class=“ans”>
+			<div id="trans"></div>
+			<div id="status"></div>
+		</div>
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/crypto-js/4.0.0/crypto-js.js"></script>
+<script type="text/javascript">
+function request(){
+var appKey = '15f45a64cbf74042';
+var key = 'iS0Mz8CxDJcgIKkxNdCfMDxITvliKO5e';//注意：暴露appSecret，有被盗用造成损失的风险
+var salt = (new Date).getTime();
+var curtime = Math.round(new Date().getTime()/1000);
+var query = $("#txt").val();
+// 多个query可以用\n连接  如 query='apple\norange\nbanana\npear'
+var from = 'zh-CHS';
+var to = 'en';
+var str1 = appKey + truncate(query) + salt + curtime + key;
+var vocabId =  '9E47A57AA8B348B789AD6C59B94AFA79';
+//console.log('---',str1);
+
+var sign = CryptoJS.SHA256(str1).toString(CryptoJS.enc.Hex);
+$.ajax({
+    url: 'http://openapi.youdao.com/api',
+    type: 'post',
+    dataType: 'jsonp',
+    data: {
+        q: query,
+        appKey: appKey,
+        salt: salt,
+        from: from,
+        to: to,
+        sign: sign,
+        signType: "v3",
+        curtime: curtime,
+        vocabId: vocabId,
+    },
+    success: function (data) {
+		//var data={ "returnPhrase": [ "我爱你" ], "query": "我爱你", "errorCode": "0", "l": "zh-CHS2en", "tSpeakUrl": "https://openapi.youdao.com/ttsapi?q=I+love+you&langType=en-USA&sign=DA22C2BC90353AC081428F7EB645937A&salt=1678457840372&voice=4&format=mp3&appKey=2827c6145da76315&ttsVoiceStrict=false", "web": [ { "value": [ "I love you", "ich liebe dich", "Wuh that I love you" ], "key": "我爱你" }, { "value": [ "Because I love you", "Because you loved me", "I love you because", "OT Valentine" ], "key": "因为我爱你" }, { "value": [ "Fated to Love You", "Fated to Lov", "Destiny Love", "DJ White Remix" ], "key": "命中注定我爱你" } ], "requestId": "fb2e9abd-eb09-4a01-87cb-f5f607cf4100", "translation": [ "I love you" ], "mTerminalDict": { "url": "https://m.youdao.com/m/result?lang=zh-CHS&word=%E6%88%91%E7%88%B1%E4%BD%A0" }, "dict": { "url": "yddict://m.youdao.com/dict?le=eng&q=%E6%88%91%E7%88%B1%E4%BD%A0" }, "webdict": { "url": "http://mobile.youdao.com/dict?le=eng&q=%E6%88%91%E7%88%B1%E4%BD%A0" }, "basic": { "phonetic": "wǒ ài nǐ", "explains": [ "I love you" ] }, "isWord": true, "speakUrl": "https://openapi.youdao.com/ttsapi?q=%E6%88%91%E7%88%B1%E4%BD%A0&langType=zh-CHS&sign=E34B71F0C5DB9FAB3AA53B9F89D3C161&salt=1678457840372&voice=4&format=mp3&appKey=2827c6145da76315&ttsVoiceStrict=false" }
+		//var data={ "requestId": "63d0084d-5b88-4caf-bc12-e30f2fb23c81", "errorCode": "113", "l": "zh-CHS2en" }
+		var tranWord = data.translation;
+		var stat = data.errorCode;
+		console.log(data)
+		console.log(tranWord);
+		console.log(stat);
+		$("#trans").text("英文翻译捏: "+tranWord);
+		//$("#status").text(stat);
+		if (stat == '0') {
+		$("#status").text("0：翻译成功")
+		} else if (stat == '108') {
+		$("#status").text("108：应用ID无效，注册账号，登录后台创建应用并完成绑定，可获得应用ID和应用密钥等信息")
+		} else if (stat == '113') {
+		$("#status").text("113：待翻译字段不能为空")
+		} else if (stat == '202') {
+		$("#status").text("202：签名检验失败,如果确认应用ID和应用密钥的正确性")
+		} else {
+		$("#status").text("errcode=" + stat)
+		}
+    }
+})}
+
+function truncate(q){
+    var len = q.length;
+    if(len<=20) return q;
+    return q.substring(0, 10) + len + q.substring(len-10, len);
+}
+</script>
+</body>
+            
