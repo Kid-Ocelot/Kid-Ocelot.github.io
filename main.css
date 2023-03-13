@@ -513,3 +513,8 @@ i {
 		margin-bottom: .4em;
 	}
 }
+
+
+.image-container-opacity img {
+  opacity: 0.5;
+}
